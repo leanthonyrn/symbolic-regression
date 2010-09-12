@@ -1,6 +1,6 @@
 #lang racket
 #|
-CHARLIE: A symbolic reduction system using genetic programming
+CHARLIE: A symbolic regression system using genetic programming
 Copyright (C) 2010 Milan Markovic (zivotinja@gmail.com | milan@elfak.rs)
 
 This program is free software: you can redistribute it and/or modify
@@ -263,8 +263,8 @@ Revision history:
       (let ([best-fit (list-ref (car fitness.populus) 1)])
         (if (or (<= (caar fitness.populus) threshold)
                 (= generation max-generations))
-            ;(if (not (zero? generation)) (> (- (caar fitness.populus) (caar (load-generation (sub1 generation)))) (no-change-threshold)) #f))
-            (begin (display best-fit) (newline) (simplify best-fit))
+            (begin (parameterize ([pre-eval-inspector translate]) 
+                     (simplify best-fit)))
             (loop (cons best-fit (create-offspring (sub1 population) fitness.populus)) (add1 generation)))))))
 
 

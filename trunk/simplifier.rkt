@@ -25,14 +25,14 @@ Revision history:
 (require "pattern-matcher.rkt")
 (provide simplify pre-eval-inspector)
 
-(define rules (make-parameter 
-               '{[(- ?a ?a)          0]
-                 [(* 0 ?a)           0]
-                 [(/ ?a 0)      +Inf.0]
-                 [(/ 0 ?a)           0]
-                 [(/ ?a ?a)          1]
-                 [(- ?a 0)          ?a]
-                 [(+ ?a 0)          ?a]
+(define rules (make-parameter
+               '{[(- ?a ?a)                         0]
+                 [(* 0 ?a)                          0]
+                 [(/ ?a 0)                     +Inf.0]
+                 [(/ 0 ?a)                          0]
+                 [(/ ?a ?a)                         1]
+                 [(- ?a 0)                         ?a]
+                 [(+ ?a 0)                         ?a]
                  [(+ ?a ?a)                  (* 2 ?a)]
                  [(* ?a ?n)                 (* ?n ?a)]
                  [(* ?n (* ?m ?a))   (* (* ?n ?m) ?a)]
