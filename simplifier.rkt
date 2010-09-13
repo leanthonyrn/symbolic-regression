@@ -28,6 +28,8 @@ Revision history:
 (define rules (make-parameter
                '{[(- ?a ?a)                         0]
                  [(* 0 ?a)                          0]
+                 [(* 1 ?a)                         ?a]
+                 [(* ?a ?a)                  (^ ?a 2)]
                  [(/ ?a 0)                     +Inf.0]
                  [(/ 0 ?a)                          0]
                  [(/ ?a ?a)                         1]
@@ -38,13 +40,23 @@ Revision history:
                  [(* ?n (* ?m ?a))   (* (* ?n ?m) ?a)]
                  [(* ?x (* ?n ?y))   (* ?n (* ?x ?y))]
                  [(* (* ?n ?x) ?y)   (* ?n (* ?x ?y))]
+                 [(* ?x (/ ?y ?x))                 ?y]
+                 [(D ?x)    1]
+                 [(D ?n)    0]
+                 [(D (+ ?a ?b)) (+ (D ?a) (D ?b))]
+                 [(D (^ ?x ?n)) (* ?n (^ ?x (- ?n 1)))]
                  }))
+
+
 
 (define (pattern rule) (car rule))
 (define (action  rule) (cadr rule))
 
 ;if you need some additional constraints on evaluated code (for example guard against division by zero parameterize this function)
-(define pre-eval-inspector (make-parameter (lambda (x) x)))
+(define pre-eval-inspector (make-parameter (lambda (exp) 
+                                             (if (eq? (car exp) 'D)
+                                                 (translate-once exp (rules))
+                                                 exp))))
 
 (define evaluate (make-evaluator 'racket/base))
 
@@ -53,11 +65,12 @@ Revision history:
       exp
       (simplify-exp (map simplify exp))))
 
+
 (define (simplify-exp exp)
   (if (and (andmap atom? (cdr exp)) (andmap number? (cdr exp)))
       (evaluate ((pre-eval-inspector) exp))
       (let [(translation (translate-once exp (rules)))]
-        (if translation 
+        (if translation
             (simplify translation) ;translate until no rules apply
             exp))))
 
