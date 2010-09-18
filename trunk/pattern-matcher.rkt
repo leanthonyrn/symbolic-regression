@@ -40,6 +40,11 @@ Revision history:
   (if (and (patvar? x) (member (substring (symbol->string x) 1 2) (symbols))) #t #f))
 (define (patvar-any? x)
   (if (and (patvar? x) (member (substring (symbol->string x) 1 2) (anything))) #t #f))
+(define (rematchable? x) 
+  (if (and (patvar? x) (> (string-length (symbol->string x)) 2)
+           (equal? #\. (string-ref (symbol->string x) 2)))
+      #f
+      #t))
 
 ;binds env assoc into expression act
 ;(define (bind-fancy act env)
@@ -70,5 +75,8 @@ Revision history:
   (if [or (and (patvar-number? variable) (number? exp))
            (and (patvar-symbol? variable) (symbol? exp))
            (patvar-any? variable)]
-      [cons (cons variable exp) env]
+      (if (rematchable? variable)
+          [cons (cons variable exp) env]
+          (if (member exp (map cdr env)) #f ;check if it is already bound
+              [cons (cons variable exp) env]))
       #f))

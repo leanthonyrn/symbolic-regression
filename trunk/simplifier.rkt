@@ -29,22 +29,30 @@ Revision history:
                '{[(- ?a ?a)                         0]
                  [(* 0 ?a)                          0]
                  [(* 1 ?a)                         ?a]
-                 [(* ?a ?a)                  (^ ?a 2)]
+                ;[(* ?a ?a)                  (^ ?a 2)]
                  [(/ ?a 0)                     +Inf.0]
                  [(/ 0 ?a)                          0]
                  [(/ ?a ?a)                         1]
                  [(- ?a 0)                         ?a]
-                 [(+ ?a 0)                         ?a]
+                 [(+ 0 ?a)                         ?a]
                  [(+ ?a ?a)                  (* 2 ?a)]
                  [(* ?a ?n)                 (* ?n ?a)]
                  [(* ?n (* ?m ?a))   (* (* ?n ?m) ?a)]
                  [(* ?x (* ?n ?y))   (* ?n (* ?x ?y))]
                  [(* (* ?n ?x) ?y)   (* ?n (* ?x ?y))]
                  [(* ?x (/ ?y ?x))                 ?y]
+                 [(/ (* ?n ?a) (* ?m ?a))   (/ ?n ?m)]
+                 [(^ ?a 1)                         ?a]
+                 [(^ ?a 0)                          1]
+                 ; D - differentiation operator - d/dx only
                  [(D ?x)    1]
                  [(D ?n)    0]
-                 [(D (+ ?a ?b)) (+ (D ?a) (D ?b))]
-                 [(D (^ ?x ?n)) (* ?n (^ ?x (- ?n 1)))]
+                 [(D (/ 1 ?x))   (log ?x)]
+                 [(D (+ ?a ?b))  (+ (D ?a) (D ?b))]
+                 [(D (- ?a ?b))  (- (D ?a) (D ?b))]
+                 [(D (* ?a ?b))  (+ (* (D ?a) ?b) (* (D ?b) ?a))]
+                 [(D (/ ?a ?b))  (/ (- (* (D ?a) ?b) (* (D ?b) ?a)) (* ?b ?b))]
+                 [(D (^ ?x ?n))  (* ?n (^ ?x (- ?n 1)))]
                  }))
 
 
@@ -53,7 +61,7 @@ Revision history:
 (define (action  rule) (cadr rule))
 
 ;if you need some additional constraints on evaluated code (for example guard against division by zero parameterize this function)
-(define pre-eval-inspector (make-parameter (lambda (exp) 
+(define pre-eval-inspector (make-parameter (lambda (exp)
                                              (if (eq? (car exp) 'D)
                                                  (translate-once exp (rules))
                                                  exp))))
