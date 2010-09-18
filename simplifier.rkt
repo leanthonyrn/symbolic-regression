@@ -62,9 +62,6 @@ Revision history:
 
 ;if you need some additional constraints on evaluated code (for example guard against division by zero parameterize this function)
 (define pre-eval-inspector (make-parameter (lambda (exp) exp)))
-;                                             (if (eq? (car exp) 'D)
-;                                                 (translate-once exp (rules))
-;                                                 exp))))
 
 (define evaluate (make-evaluator 'racket/base))
 
