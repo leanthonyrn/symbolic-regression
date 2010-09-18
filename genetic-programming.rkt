@@ -74,6 +74,9 @@ Revision history:
 ;Misc. function
 (define (I something) something)   ;identity
 (define file with-input-from-file)
+(define (date->string date) (format "~a.~a.~a ~a:~a GMT+~a" 
+                                   (date-year date) (date-month date) (date-day date) (date-hour date) (date-minute date) 
+                                   (/ (date-time-zone-offset date) 3600)))
 (define (square x) (* x x))
 (define (atom? x) (not (pair? x)))
 (define (leaf? node) (or (number? node) (symbol? node)))
@@ -227,20 +230,28 @@ Revision history:
          (map cdr fitness.populus))))
            
 (define (save-generation nr populus)
+  (define (pretty-print lst)
+    (cond [(null? lst) (newline)]
+          [else (write (car lst)) (newline) (pretty-print (cdr lst))]))
   (with-output-to-file (string-append "generations/" (number->string nr) ".txt")
-    (lambda () (write populus)) 
+    (lambda () 
+      (display (format "; CHARLIE: Generation ~a's listing~n; Date: ~a ~n; Formatted as pairs (fitness . expression)~n("
+                       nr
+                       (date->string (seconds->date (current-seconds)))))
+      (pretty-print populus) 
+      (display ")"))
      #:mode 'text #:exists 'replace))
 
 (define (load-generation nr)
   (with-input-from-file (string-append "generations/" (number->string nr) ".txt") read))
 
 ;non proportional selection
-(define (natural-selection fitness.populus)
+(define (natural-selection-old fitness.populus)
   (define (fittest-of n) (inexact->exact (floor (* n (expt (random) 1.3)))))
   (list-ref (list-ref fitness.populus (fittest-of (length fitness.populus))) 1))
 
 ;proportional
-(define (natural-selection-proportional normfit.populus)
+(define (natural-selection normfit.populus)
   (let loop ([pop normfit.populus] [last '(0 null)] [fit (random)])
     (if (null? pop) (cadr last)
         (if (>= (+ (caar pop) (car last)) fit) (cadar pop)
