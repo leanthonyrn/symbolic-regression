@@ -61,10 +61,10 @@ Revision history:
 (define (action  rule) (cadr rule))
 
 ;if you need some additional constraints on evaluated code (for example guard against division by zero parameterize this function)
-(define pre-eval-inspector (make-parameter (lambda (exp)
-                                             (if (eq? (car exp) 'D)
-                                                 (translate-once exp (rules))
-                                                 exp))))
+(define pre-eval-inspector (make-parameter (lambda (exp) exp)))
+;                                             (if (eq? (car exp) 'D)
+;                                                 (translate-once exp (rules))
+;                                                 exp))))
 
 (define evaluate (make-evaluator 'racket/base))
 
@@ -75,7 +75,7 @@ Revision history:
 
 
 (define (simplify-exp exp)
-  (if (and (andmap atom? (cdr exp)) (andmap number? (cdr exp)))
+  (if (and (andmap atom? (cdr exp)) (andmap number? (cdr exp)) (not (equal? (car exp) 'D)))
       (evaluate ((pre-eval-inspector) exp))
       (let [(translation (translate-once exp (rules)))]
         (if translation
