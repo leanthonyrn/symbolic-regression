@@ -22,4 +22,4 @@
      ;[translation-table `((+ . ,unsafe-fl+) (- . ,unsafe-fl-) (* . ,unsafe-fl*) (div . ,div) (sin . ,unsafe-flsin) (cos . ,unsafe-flcos))]
      [symbol/constant 1])
   (random-seed 400000)
-  (time (life 50 100 sinx/x .001)))
+  (time (life 500 100 sinx/x 1e-6)))
