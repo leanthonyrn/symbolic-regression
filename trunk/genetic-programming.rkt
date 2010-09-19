@@ -77,6 +77,9 @@ Revision history:
 (define (date->string date) (format "~a.~a.~a ~a:~a GMT+~a" 
                                    (date-year date) (date-month date) (date-day date) (date-hour date) (date-minute date) 
                                    (/ (date-time-zone-offset date) 3600)))
+(define (n->str number nchars)
+  (let ([n (number->string number)])
+    (string-append (make-string (- nchars (string-length n)) #\0) n)))
 (define (square x) (* x x))
 (define (atom? x) (not (pair? x)))
 (define (leaf? node) (or (number? node) (symbol? node)))
@@ -233,7 +236,7 @@ Revision history:
   (define (pretty-print lst)
     (cond [(null? lst) (newline)]
           [else (write (car lst)) (newline) (pretty-print (cdr lst))]))
-  (with-output-to-file (string-append "generations/" (number->string nr) ".txt")
+  (with-output-to-file (string-append "generations/" (n->str nr 4) ".txt")
     (lambda () 
       (display (format "; CHARLIE: Generation ~a's listing~n; Date: ~a ~n; Formatted as pairs (fitness . expression)~n("
                        nr
@@ -243,7 +246,7 @@ Revision history:
      #:mode 'text #:exists 'replace))
 
 (define (load-generation nr)
-  (with-input-from-file (string-append "generations/" (number->string nr) ".txt") read))
+  (with-input-from-file (string-append "generations/" (n->str nr 4) ".txt") read))
 
 ;non proportional selection
 (define (natural-selection-old fitness.populus)
