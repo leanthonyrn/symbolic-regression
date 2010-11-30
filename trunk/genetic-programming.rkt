@@ -57,18 +57,18 @@ Revision history:
 (define (function-set)     (map car (translation-table)))
 (define (proc? symb)       (member symb (function-set)))
 
-(define mutation-percent   (make-parameter 10.0))  ;what percent of chromosomes should be mutated
-(define stop-percent       (make-parameter 10.0))    ;stop probab. at creating function
-(define subexp-percent     (make-parameter 20.0))    ;stop probab. at fetching subexpression
-(define crossover-percent  (make-parameter 20.0))    ;stop probab. at crossover
+(define mutation-percent   (make-parameter 5.0))     ;what percent of chromosomes should be mutated
+(define stop-percent       (make-parameter 5.0))     ;stop probab. at creating function
+(define subexp-percent     (make-parameter 10.0))    ;stop probab. at fetching subexpression
+(define crossover-percent  (make-parameter 10.0))    ;stop probab. at crossover
 (define initial-complexity (make-parameter 5.0))     ;max initial depth of exp
 (define allowed-complexity (make-parameter 17.0))    ;max overall depth of exp (Koza. 17)
 (define symbol/constant    (make-parameter 0.5))     ;ratio between symbols and constants
-(define variables          (make-parameter '(x))) ; list of variables (for multivariate add more symbols)
+(define variables          (make-parameter '(x)))    ;list of variables (for multivariate add more symbols)
 (define random-constant    (make-parameter random))
                                                
 ;we use a sandboxed evaluation to discard memory and time consuming functions. If using scheme other than racket plain eval should do
-(define evaluate           (parameterize ([sandbox-eval-limits '(.25 5)]);(s MiB) ;TODO: handle these exceptions
+(define evaluate           (parameterize ([sandbox-eval-limits '(10 5)]);(s MiB) ;TODO: handle these exceptions
                              (make-evaluator 'racket/base)))
 ;-------------------------------------------------------------------------------------------------------------
 ;Misc. function
@@ -208,16 +208,16 @@ Revision history:
       (if (condition? element (car lst)) (cons element lst)
           (cons (car lst) (insert-before condition? element (cdr lst))))))
 
-(define (init-gen population)
-  (if (zero? population) null
-      (cons (make-function (initial-complexity)) (init-gen (sub1 population)))))
-
 (define (sort-by-fitness apopulus)
   (letrec ([<fitness  (lambda (A B) (< (car A) (car B)))]
            [insert    (lambda (elem lst) (insert-before <fitness elem lst))])
     (foldl insert '() apopulus)))
-                 
-;creates assoc with (fitness . tree) pairs
+
+(define (init-gen population)
+  (if (zero? population) null
+      (cons (make-function (initial-complexity)) (init-gen (sub1 population)))))
+
+; creates assoc with (fitness . tree) pairs
 ;(assign-fitness (lambda (F) (calc-fitness F x x)) populus)
 (define (assign-fitness fitness populus)
 ;  (let ([simplified-populus (map simplify populus)])
@@ -268,7 +268,7 @@ Revision history:
 
 (define (life max-generations population fitness-function threshold [load -1])
   (let loop ([populus (if (= -1 load) (init-gen population) (map cadr (load-generation load)))]
-             [generation 0])
+             [generation (if (= -1 load) 0 load)])
     (let ([fitness.populus (sort-by-fitness (assign-fitness fitness-function populus))])
       (save-generation generation fitness.populus)
       (display "___________________________________________")(newline)
