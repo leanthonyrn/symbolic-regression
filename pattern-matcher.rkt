@@ -26,11 +26,9 @@ Revision history:
 ;?m ?n ?o ?p ?q matches numbers
 (define numbers (make-parameter '("m" "n" "i" "j" "k")))
 ;?x ?y ?z ?i ?j matches variables (symbols)
-(define symbols (make-parameter '("x" "y" "z")))
+(define symbols (make-parameter '("x" "y" "z" "**"#|for replacement patterns only|#)))
 ;?a ?b ?c ?d ?e matches anything
 (define anything (make-parameter '("a" "b" "c" "d" "e")))
-;?* matches segment
-(define segments (make-parameter '("*" "#")))
 
 (define (patvar? x)
   (and (symbol? x) (equal? #\? (string-ref (symbol->string x) 0))))
