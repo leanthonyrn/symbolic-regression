@@ -1,4 +1,7 @@
 #lang racket
+(provide (all-defined-out))
+
+
 (define (matrix . columns) 
   (if (apply = (map length columns))
       columns

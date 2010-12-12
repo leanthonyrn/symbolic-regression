@@ -2,6 +2,8 @@
 (require "pattern-matcher.rkt") ;we use bind utility from this module
 (require "simplifier.rkt")
 (require "list-matrix.rkt")
+(require "genetic-programming.rkt")
+(provide (all-defined-out))
 
 ;Gauss-Newton algorithm
 
@@ -33,10 +35,33 @@
   (define (make-env symbols datum) (map cons symbols datum))
   (map (λ(datum) (bind expr (make-env symbols datum)))
        data))
-;expr vars data -> J
-(define (generate-jacobian expr vars data)
+;expr vars data -> (env  J)
+(define (generate-jacobian expr vars-in-data data)
   (let* ([res (name-coeffs expr)]
          [expression (first res)]
          [env (second res)]
-         [exprs (generate-functions expression vars data)])
-    (map (λ(expr) (partial-diff expr (map car env))) exprs)))
+         [exprs (generate-functions expression vars-in-data data)])
+    (list env expression
+          (map (λ(expr) (partial-diff expr (map car env))) exprs))))
+
+(define (gauss-newton expr vars-in-data data num-iter)
+  ;calculates residuals
+  (define (residuals expr vars-in-data data)
+    (map (code->function expr vars-in-data)))
+  (if (zero? num-iter) expr
+      (let* ([Je/e       (generate-jacobian expr vars-in-data data)]
+             [J          (first Je/e)]
+             [expression (second Je/e)]
+             [env        (third Je/e)]
+             [beta       (map car env)]
+             [beta0      (map cdr env)]
+             [r          (residuals expr vars-in-data data)]
+             [Jf         (matrix-map (λ (expr) (simplify (bind expr env))))]
+             [Jf\'*Jf    (multiply (transpose Jf) Jf)]
+             [delta      (multiply (multiply (inverse Jf\'*Jf) Jf) r)]
+             [beta1      (map + beta0 delta)])
+        (gauss-newton 
+         (bind expression (map cons beta beta1))
+         vars-in-data
+         data
+         (sub1 num-iter)))))

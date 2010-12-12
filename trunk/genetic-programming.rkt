@@ -28,8 +28,7 @@ Revision history:
 (require racket/unsafe/ops)
 (require racket/sandbox)
 (require "simplifier.rkt")
-(provide 
- (all-defined-out))
+(provide (except-out (all-defined-out) atom?))
 ;-------------------------------------------------------------------------------------------------------------
 ;                  ;      
 ;    ;;;;   ;;;;  ;;;; ;    ;  ; ;;;
@@ -277,8 +276,10 @@ Revision history:
       (let ([best-fit (list-ref (car fitness.populus) 1)])
         (if (or (<= (caar fitness.populus) threshold)
                 (= generation max-generations))
-            (begin (parameterize ([pre-eval-inspector translate]) 
-                     (simplify best-fit)))
+            (begin
+              (display best-fit)
+              (parameterize ((pre-eval-inspector translate))
+                (simplify best-fit)))
             (loop (cons best-fit (create-offspring (sub1 population) fitness.populus)) (add1 generation)))))))
 
 
@@ -292,77 +293,3 @@ Revision history:
 (define (sequence start increment end)
   (if (>= start end) null
       (cons start (sequence (+ start increment) increment end))))
-         
-;          ;                      ;  ;   ;;       
-;          ;                      ;  ;  ;;        
-;                                 ;     ;;        
-;    ;;;;  ;  ; ;;; ;;;   ; ;;;   ;  ; ;;;;;;   ;;
-;   ;   ;  ;  ;;  ;;; ;;  ;;  ;;  ;  ;  ;;  ;   ; 
-;   ;      ;  ;   ;;   ;  ;    ;  ;  ;  ;;  ;   ; 
-;   ;;;;   ;  ;   ;;   ;  ;    ;; ;  ;  ;;  ;; ;; 
-;       ;; ;  ;   ;;   ;  ;    ;; ;  ;  ;;   ;;;  
-;   ;   ;; ;  ;   ;;   ;  ;;  ;;  ;  ;  ;;   ;;;  
-;    ;;;;  ;  ;   ;;   ;  ; ;;;   ;  ;  ;;    ;   
-;                         ;                  ;;   
-;                         ;                 ;;    
-;
-;(define (Zero? x)
-;  (and (number? x) (zero? x)))
-;
-;(define (One? x)
-;  (and (number? x) (= 1 x)))
-;
-;(define (not-number? x)
-;  (not (number? x)))
-;
-;(define (simplify tree)
-;  (cond
-;    ([atom? tree] tree)
-;    (else (simplify-exp (map simplify tree)))))
-;
-;simplifies already simplified expr
-; raw version (TODO: rewrite using pattern matcher and rules)
-;(define (simplify-exp tree)
-;  (define (addition? oper) (or (eq? '+ oper) (eq? '- oper)))
-;  (define (multiplication? oper) (or (eq? '* oper) (eq? '/ oper)))
-;  (let ([procedure (car tree)]
-;        [operands  (cdr tree)])
-;    (cond ([andmap number? operands] ((code->function tree '()))) ;eval if no bound variables found
-;          ([and (eq? '+ procedure) (apply equal? operands)] (simplify `(* 2 ,(car operands)))) ;could be slow if complex expression
-;          ([ormap atom? operands]
-;           (if (= 2 (proc-arity (car tree)))
-;               (cond
-;                 ([and (eq? '/ procedure) (apply eq? operands)]      1)
-;                 ([and (eq? '/ procedure) (ormap Zero? operands)]    0)
-;                 ([and (eq? '- procedure) (apply eq? operands)]      0)
-;                 ([and (eq? '- procedure) (Zero? (list-ref tree 2))] (list-ref tree 1))
-;                 ([and (eq? '+ procedure) (ormap number? operands) (ormap Zero? operands)] (car (filter (lambda (x) (not (Zero? x))) operands)))
-;                 ([and (eq? '* procedure) (ormap number? operands) (ormap Zero? operands)] 0)
-;                 ([and (eq? '^ procedure) (ormap Zero? operands)]    0)
-;                 ([and (eq? '^ procedure) (One? (car operands))]     1)
-;                 ([and (eq? '^ procedure) (One? (cadr operands))] (car operands))
-;                 
-;                 ([and (multiplication? procedure) (ormap number? operands) (ormap pair? operands) ; (* 2 (* exp 3)) -> (* 6 exp)
-;                       (let* ([subexp (car (filter pair? operands))]
-;                              [subproc (car subexp)]
-;                              [subops  (cdr subexp)])
-;                         (and (multiplication? subproc) (ormap number? subops) (ormap not-number? subops)))]
-;                  (simplify (let ([subexp (car (filter pair? operands))])
-;                              `(* ,(* ((translate procedure) 1 (car (filter number? operands))) 
-;                                      ((translate (car subexp)) 1 (car (filter number? subexp))))
-;                                  ,(car (filter not-number? (cdr subexp)))))))
-;                 
-;                 ([and (addition? procedure) (ormap number? operands) (ormap pair? operands) ; (+ 2 (+ exp 3)) -> (+ 5 exp)
-;                       (let* ([subexp (car (filter pair? operands))]
-;                              [subproc (car subexp)]
-;                              [subops  (cdr subexp)])
-;                         (and (addition? subproc) (ormap number? subops) (ormap not-number? subops)))]
-;                  (simplify (let ([subexp (car (filter pair? operands))])
-;                              `(+ ,(+ ((translate procedure) 0 (car (filter number? operands))) 
-;                                      ((translate (car subexp)) 0 (car (filter number? subexp))))
-;                                  ,(car (filter not-number? (cdr subexp)))))))
-;                 
-;                 ([and (eq? '* procedure) (ormap number? operands) (ormap One? operands)]  (car (filter (lambda (x) (not (One? x))) operands)))
-;                 (else tree))
-;               tree))
-;          (else tree))))
