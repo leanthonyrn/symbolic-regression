@@ -1,6 +1,7 @@
 #lang racket
 (require "pattern-matcher.rkt") ;we use bind utility from this module
 (require "simplifier.rkt")
+(require "list-matrix.rkt")
 
 ;Gauss-Newton algorithm
 
@@ -39,11 +40,3 @@
          [env (second res)]
          [exprs (generate-functions expression vars data)])
     (map (λ(expr) (partial-diff expr (map car env))) exprs)))
-
-
-
-(define (print-matrix M)
-  (define (println lst)
-    (map (λ(x) (display x) (display "\t\t")) lst)
-    (newline))
-  (map println M) #t)
