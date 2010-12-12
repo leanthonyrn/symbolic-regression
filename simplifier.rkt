@@ -23,7 +23,7 @@ Revision history:
 
 (require racket/sandbox)
 (require "pattern-matcher.rkt")
-(provide simplify D drules srules)
+(provide simplify D drules srules pre-eval-inspector)
 
 ;simplification rules
 (define srules (make-parameter
@@ -80,6 +80,7 @@ Revision history:
 (define (action  rule) (cadr rule))
 
 (define evaluate (make-evaluator 'racket/base))
+(define pre-eval-inspector (make-parameter (λ (x) x)))
 
 (define (simplify exp)
   (if [atom? exp]
@@ -88,7 +89,7 @@ Revision history:
 
 (define (simplify-exp exp)
   (if (and (andmap atom? (cdr exp)) (andmap number? (cdr exp)))
-      (evaluate exp)
+      (evaluate ((pre-eval-inspector) exp))
       (let [(translation (translate-once exp (srules)))]
         (if translation
             (simplify translation) ;translate until no rules apply
