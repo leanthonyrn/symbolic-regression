@@ -35,7 +35,7 @@
   (define (make-env symbols datum) (map cons symbols datum))
   (map (λ(datum) (bind expr (make-env symbols datum)))
        data))
-;expr vars data -> (env  J)
+;expr vars data -> (env expr J)
 (define (generate-jacobian expr vars-in-data data)
   (let* ([res (name-coeffs expr)]
          [expression (first res)]
@@ -65,3 +65,22 @@
          vars-in-data
          data
          (sub1 num-iter)))))
+
+;test
+(define g1000 (with-input-from-file "generations/1009.txt" read))
+(define ex '(/ (/ h 0.00016132276460659387) (* (- (log 1.5598753370524297e-24) h) h)))
+
+(define data (with-input-from-file "1d.list" read))
+
+;(define Je/e (parameterize ([pre-eval-inspector translate])
+;    (generate-jacobian '(* (- (rlog x) (* 3 x))) '(h) (map list (map second data)))))
+;test
+(define Je (parameterize ([pre-eval-inspector translate])
+             (generate-jacobian ex '(h) (map list (map second data)))))
+
+(define JJ (matrix-map (third Je)
+                       (λ (expr)
+                         (parameterize ([pre-eval-inspector translate])
+                           (simplify (bind expr (first Je)))))))
+
+(define M (multiply (inverse (multiply (transpose JJ) JJ)) (transpose JJ)))

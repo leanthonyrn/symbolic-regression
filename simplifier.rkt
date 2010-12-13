@@ -25,37 +25,40 @@ Revision history:
 (require "pattern-matcher.rkt")
 (provide simplify D drules srules pre-eval-inspector)
 
+(define rlog log)
+(define ^ expt)
+
 ;simplification rules
 (define srules (make-parameter
                '{[(- ?a ?a)    0]
                  [(* 0 ?a)     0]
-                 [(* 1 ?a)     ?a]
+                 [(* 1 ?a)    ?a]
                  [(+ 0 ?a)    ?a]
-                 [(^ ?a 1)     ?a]
-                 [(^ ?a 0)     1]
-                 [(/ 0 ?a)     0]                 
-                 [(- ?a 0)     ?a]
-                 [(/ 1 ?a)     (^ ?a -1)]
-                 [(+ 0 ?a)     ?a]
-                 [(+ ?a ?a)    (* 2 ?a)]
-                 [(+ (* ?m ?a) (* ?n ?a)) (* (+ ?m ?n) ?a)]
-                 [(* ?a ?n)    (* ?n ?a)]
-                 [(+ ?a ?n)    (+ ?n ?a)]
-                 [(/ ?a ?a)    1]
-                 [(* ?a ?a)    (^ ?a 2)]
+                 [(expt ?a 1) ?a]
+                 [(expt ?a 0) 1]
+                 [(/ 0 ?a)    0]                 
+                 [(- ?a 0)    ?a]
+                 [(/ 1 ?a)    (expt ?a -1)]
+                 [(+ 0 ?a)    ?a]
+                 [(+ ?a ?a)   (* 2 ?a)]
+                 [(+ (* ?m ?a)(* ?n ?a)) (* (+ ?m ?n) ?a)]
+                 [(* ?a ?n)   (* ?n ?a)]
+                 [(+ ?a ?n)   (+ ?n ?a)]
+                 [(/ ?a ?a)   1]
+                 [(* ?a ?a)   (expt ?a 2)]
                  [(* ?n (* ?m ?a))   (* (* ?n ?m) ?a)]
                  [(* ?x (* ?n ?y))   (* ?n (* ?x ?y))]
                  [(* (* ?n ?x) ?y)   (* ?n (* ?x ?y))]
                  [(* ?b (/ ?a ?b))   ?a]
                  [(* (/ ?a ?b) ?b)   ?a]
                  [(/ (* ?n ?a) (* ?m ?a)) (*(/ ?n ?m) ?a)]
-                 [(^ ?a 1)   ?a]
-                 [(^ ?a 0)    1]
-                 [(* ?x (^ ?x n))         (^ ?x (+ n 1))]
-                 [(* (^ ?a ?n) (^ ?a ?m)) (^ ?a (+ ?m ?n))]
+                 [(expt ?a 1)   ?a]
+                 [(expt ?a 0)    1]
+                 [(* ?x (expt ?x n))         (expt ?x (+ n 1))]
+                 [(* (expt ?a ?n) (expt ?a ?m)) (expt ?a (+ ?m ?n))]
                  [(* (* ?n ?x) (* ?m ?x)) (* (* ?m ?n) ?x)]
-                 [(^ (^ ?x ?m) ?n)        (^ ?x (* ?n ?m))]
-                 [(* (^ ?x ?a) (* (^ ?x ?b) ?c)) (* (^ ?x (+ ?a ?b)) ?c)]
+                 [(expt (expt ?x ?m) ?n)        (expt ?x (* ?n ?m))]
+                 [(* (expt ?x ?a) (* (expt ?x ?b) ?c)) (* (expt ?x (+ ?a ?b)) ?c)]
                  }))
 
 ;differentiation rules
@@ -71,9 +74,9 @@ Revision history:
                  [(D ?x (- ?a ?b))  (- (D ?x ?a) (D ?x ?b))]
                  [(D ?x (* ?a ?b))  (+ (* (D ?x ?a) ?b) (* (D ?x ?b) ?a))]
                  [(D ?x (/ ?a ?b))  (/ (- (* (D ?x ?a) ?b) (* (D ?x ?b) ?a)) (* ?b ?b))]
-                 [(D ?x (^ ?a ?n))  (* (* ?n (^ ?a (- ?n 1))) (D ?x ?a))]
-                 [(D ?x (^ ?n ?a))  (* (D ?x ?a) (* (^ ?n ?a) (log ?n)))]
-                 [(D ?x (^ ?a ?b))  (* (^ ?a ?b) (D ?x (* (log ?a) ?b)))]                  
+                 [(D ?x (expt ?a ?n))  (* (* ?n (expt ?a (- ?n 1))) (D ?x ?a))]
+                 [(D ?x (expt ?n ?a))  (* (D ?x ?a) (* (expt ?n ?a) (log ?n)))]
+                 [(D ?x (expt ?a ?b))  (* (expt ?a ?b) (D ?x (* (log ?a) ?b)))]                  
                  }))
 
 (define (pattern rule) (car rule))

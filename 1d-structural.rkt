@@ -41,4 +41,4 @@
      [translation-table `((+ . ,add) (- . ,sub) (* . ,mul) (/ . ,div) (exp . ,exp) (rlog . ,rlog))]
      [symbol/constant .75])
   (random-seed 666)
-  (time (life 1000 1 fitness 1e-6 1000)))
+  (time (life 1000 2 fitness 1e-6 1000)))
