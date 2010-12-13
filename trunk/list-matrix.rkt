@@ -67,7 +67,7 @@
 (define (inverse A)
   (let ([dim (matrix-dim A)]
         [determinant (det A)])
-    (if (zero? determinant) #f
+    (if (zero? determinant) (apply build-matrix dim) ;we need zero matrix for gauss-newton
         (transpose (scale (/ 1 determinant)
                           (build-matrix (first dim) (second dim)
                                         (λ (i j) (*

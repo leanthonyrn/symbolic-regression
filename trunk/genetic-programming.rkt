@@ -22,6 +22,7 @@ Revision history:
 0.1.0 Tue Aug 24 2010 - removed globals, added parameters instead, tried natural-selection-proportional (discarded but included in this file)
 0.1.1 Sun Sep  5 2010 - added simplify (expression simplifier
 0.1.2 Wed Sep  8 2010 - moved simplify to a separate module, added sandboxed evaluation
+0.2.0 Mon Dec 13 2010 - added Gauss-Newton algorithm for fixing the coefficients
 |#
 (require mzlib/defmacro)
 (require plot)
@@ -51,7 +52,7 @@ Revision history:
 (define (scdr lst) (if (and (list? lst) (not (null? lst))) (cdr lst) null))
 (define (sexpt a b) (if (zero? a) 0 (expt a b)))
 
-(define translation-table  (make-parameter `((+ . ,add) (- . ,sub) (* . ,mul) (/ . ,div) (sin . ,sin) (cos . ,cos) (expt . ,sexpt) (rlog . ,rlog))))
+(define translation-table  (make-parameter `((+ . ,add) (- . ,sub) (* . ,mul) (/ . ,div) (sin . ,sin) (cos . ,cos) (expt . ,sexpt) (log . ,rlog))))
 (define (arity-table)      (map cons (map car (translation-table)) (map procedure-arity (map cdr (translation-table)))))
 (define (function-set)     (map car (translation-table)))
 (define (proc? symb)       (member symb (function-set)))
@@ -276,10 +277,8 @@ Revision history:
       (let ([best-fit (list-ref (car fitness.populus) 1)])
         (if (or (<= (caar fitness.populus) threshold)
                 (= generation max-generations))
-            (begin
-              (display best-fit)
-              (parameterize ((pre-eval-inspector translate))
-                (simplify best-fit)))
+            (parameterize ([pre-eval-inspector translate])
+              (simplify best-fit))
             (loop (cons best-fit (create-offspring (sub1 population) fitness.populus)) (add1 generation)))))))
 
 
