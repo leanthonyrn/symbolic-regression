@@ -46,6 +46,21 @@
 (define (scale scalar matrix)
   (matrix-map matrix (λ (x) (* scalar x))))
 
+(define (add-elems A B)
+  (let ([dimA (matrix-dim A)]
+        [dimB (matrix-dim B)])
+    (if (andmap = dimA dimB)
+        (build-matrix (second dimA) (first dimA) (λ(i j) (+ (matrix-ref A i j) (matrix-ref B i j))))
+        (error "matrix sizes must agree."))))
+
+(define (sub-elems A B)
+  (let ([dimA (matrix-dim A)]
+        [dimB (matrix-dim B)])
+    (if (andmap = dimA dimB)
+        (build-matrix (second dimA) (first dimA) (λ(i j) (- (matrix-ref A i j) (matrix-ref B i j))))
+        (error "matrix sizes must agree."))))
+
+
 (define (multiply A B)
   (map [λ(Col) (map [λ(Row) (apply + (map * Col Row))] (transpose B))] A))
 

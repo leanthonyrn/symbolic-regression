@@ -1,8 +1,8 @@
 #lang racket
-(require "pattern-matcher.rkt") ;we use bind utility from this module
-(require "simplifier.rkt")
-(require "list-matrix.rkt")
-(require "genetic-programming.rkt")
+(require "pattern-matcher.rkt" ;we use bind utility from this module
+         "simplifier.rkt"
+         "list-matrix.rkt"
+         "genetic-programming.rkt")
 (provide (all-defined-out))
 
 ;Gauss-Newton algorithm
@@ -18,6 +18,7 @@
       (cond [(null? env) null]
             [(env-pair? (car env)) (cons (car env) (env-flatten (cdr env)))]
             [else (append (env-flatten (car env)) (env-flatten (cdr env)))]))
+  
     (define (coeff expr env)
       (cond [(null? expr) (list expr null)]
             [(number? expr) (let ([symbol (gensym 'c)]) (list symbol (cons symbol expr)))]
@@ -40,47 +41,51 @@
   (let* ([res (name-coeffs expr)]
          [expression (first res)]
          [env (second res)]
-         [exprs (generate-functions expression vars-in-data data)])
+         [dat (let ([n (sub1 (length (first data)))]) (map (λ(x) (take x n)) data))]
+         [exprs (generate-functions expression vars-in-data dat)])
     (list env expression
           (map (λ(expr) (partial-diff expr (map car env))) exprs))))
 
 (define (gauss-newton expr vars-in-data data num-iter)
   ;calculates residuals
   (define (residuals expr vars-in-data data)
-    (map (code->function expr vars-in-data)))
+    (transpose 
+     (list 
+      (map - (map 
+              (λ(x) (apply (code->function expr vars-in-data) x))
+              (map (λ(x) (take x (sub1 (length x)))) data))
+           (map last data)))))
+  
   (if (zero? num-iter) expr
       (let* ([Je/e       (generate-jacobian expr vars-in-data data)]
-             [J          (first Je/e)]
+             [J          (third Je/e)]
              [expression (second Je/e)]
-             [env        (third Je/e)]
+             [env        (first Je/e)]
              [beta       (map car env)]
              [beta0      (map cdr env)]
              [r          (residuals expr vars-in-data data)]
-             [Jf         (matrix-map (λ (expr) (simplify (bind expr env))))]
+             [Jf         (matrix-map J (λ (expr) (simplify (bind expr env))))]
              [Jf\'*Jf    (multiply (transpose Jf) Jf)]
-             [delta      (multiply (multiply (inverse Jf\'*Jf) Jf) r)]
-             [beta1      (map + beta0 delta)])
-        (gauss-newton 
-         (bind expression (map cons beta beta1))
-         vars-in-data
-         data
-         (sub1 num-iter)))))
+             [delta      (multiply (multiply (inverse Jf\'*Jf) (transpose Jf)) r)]
+             [beta1      (matrix-map (sub-elems (map list beta0) delta) exact->inexact)])
+        (display "MSE:") (display (exact->inexact (/ (apply + (map sqr (map car r))) (length (map car r)))))
+        (newline) (display "---") (newline)
+        (let ([e (bind expression (map cons beta (map car beta1)))])
+          (display e)(newline)
+          (gauss-newton 
+           e
+           vars-in-data
+           data
+           (sub1 num-iter))))))
 
 ;test
-(define g1000 (with-input-from-file "generations/1009.txt" read))
-(define ex '(/ (/ h 0.00016132276460659387) (* (- (log 1.5598753370524297e-24) h) h)))
+;(define g1000 (with-input-from-file "generations/1009.txt" read))
 
-(define data (with-input-from-file "1d.list" read))
 
-;(define Je/e (parameterize ([pre-eval-inspector translate])
-;    (generate-jacobian '(* (- (rlog x) (* 3 x))) '(h) (map list (map second data)))))
-;test
-(define Je (parameterize ([pre-eval-inspector translate])
-             (generate-jacobian ex '(h) (map list (map second data)))))
+(define ex '(+ (+ (* 20 (* x x)) (* 6 x)) (/ 2 (+ x 2))))
 
-(define JJ (matrix-map (third Je)
-                       (λ (expr)
-                         (parameterize ([pre-eval-inspector translate])
-                           (simplify (bind expr (first Je)))))))
+(define X (build-list 20 values))
+(define Y (build-list 20 (λ(x) (+ (+ (* 5 (* x x)) (* 3 x)) (/ 1 (+ x 1))))))
 
-(define M (multiply (inverse (multiply (transpose JJ) JJ)) (transpose JJ)))
+(gauss-newton ex '(x) (map list X Y) 20)
+
