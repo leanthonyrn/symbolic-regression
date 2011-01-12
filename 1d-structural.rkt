@@ -1,8 +1,6 @@
 #lang racket
-(require "genetic-programming.rkt")
-(require plot)
-;(require racket/unsafe/ops)
-;(require (planet williams/science/random-distributions/gaussian))
+(require "genetic-programming.rkt"
+         (prefix-in f: "safe-defines.rkt"))
 
 (define (nan? x) (not (= x x)))
 
@@ -38,7 +36,7 @@
 
 (parameterize
     ([variables '(h)]
-     [translation-table `((+ . ,add) (- . ,sub) (* . ,mul) (/ . ,div) (exp . ,exp) (rlog . ,rlog))]
+     [translation-table `((+ . ,f:+) (- . ,f:-) (* . ,f:*) (/ . ,f:/) (exp . ,f:exp) (log . ,f:log))]
      [symbol/constant .75])
-  (random-seed 666)
-  (time (life 1000 2 fitness 1e-6 1000)))
+  (random-seed 664)
+  (life 1000 200 fitness 1e-6))

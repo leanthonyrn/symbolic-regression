@@ -78,14 +78,20 @@
            data
            (sub1 num-iter))))))
 
-;test
-;(define g1000 (with-input-from-file "generations/1009.txt" read))
 
-
+;TEST CASES
 (define ex '(+ (+ (* 20 (* x x)) (* 6 x)) (/ 2 (+ x 2))))
 
 (define X (build-list 20 values))
 (define Y (build-list 20 (λ(x) (+ (+ (* 5 (* x x)) (* 3 x)) (/ 1 (+ x 1))))))
 
-(gauss-newton ex '(x) (map list X Y) 20)
+;(gauss-newton ex '(x) (map list X Y) 20)
 
+
+;1d-structural 150gen score 0.009004204992428044 (stuck)
+;(define ex '(/ (/ (- h (- (+ (+ h (+ (+ (- (* h h) h) (+ h (/ h (/ 0.0007284950162342976 h)))) (- h (* (* h h) h)))) (- h h)) (* (* (+ h h) h) h))) (* (- (- (log 0.003131963321612487) h) h) h)) (+ (+ (log h) (/ h h)) (+ (log h) (/ h (+ h (- h (/ 0.0007264220029854186 h))))))))
+
+
+;(define data (with-input-from-file "1d.list" read))
+
+;(gauss-newton ex '(x) (map list X Y) 20)
