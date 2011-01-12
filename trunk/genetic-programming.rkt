@@ -24,11 +24,13 @@ Revision history:
 0.1.2 Wed Sep  8 2010 - moved simplify to a separate module, added sandboxed evaluation
 0.2.0 Mon Dec 13 2010 - added Gauss-Newton algorithm for fixing the coefficients
 |#
-(require mzlib/defmacro)
-(require plot)
-(require racket/unsafe/ops)
-(require racket/sandbox)
-(require "simplifier.rkt")
+(require mzlib/defmacro
+         plot
+         ;racket/unsafe/ops
+         racket/sandbox
+         "simplifier.rkt"
+         (prefix-in f: "safe-defines.rkt"))
+
 (provide (except-out (all-defined-out) atom?))
 ;-------------------------------------------------------------------------------------------------------------
 ;                  ;      
@@ -41,18 +43,19 @@ Revision history:
 ;    ;;;;   ;;;;    ;;  ;;; ;  ; ;;;  
 ;                              ;      
 ;                              ;
-;-------------------------------------------------------------------------------------------------------------c
+;-------------------------------------------------------------------------------------------------------------
 
-;protected functions - removed singularities and with constant arities
-(define (rlog x)  (if (zero? x) 1 (log x)))
-(define (div x y) (if (zero? y) 0 (/ x y)))
-(define (add x y) (+ x y))
-(define (sub x y) (- x y))
-(define (mul x y) (* x y))
-(define (scdr lst) (if (and (list? lst) (not (null? lst))) (cdr lst) null))
-(define (sexpt a b) (if (zero? a) 0 (expt a b)))
+;use only safe functions (defined in entire domain - see safe-defines.rkt)
+(define translation-table
+  (make-parameter `((+    . ,f:+)
+                    (-    . ,f:-)
+                    (*    . ,f:*)
+                    (/    . ,f:/)
+                    (sin  . ,f:sin)
+                    (cos  . ,f:cos)
+                    (expt . ,f:expt)
+                    (log  . ,f:log))))
 
-(define translation-table  (make-parameter `((+ . ,add) (- . ,sub) (* . ,mul) (/ . ,div) (sin . ,sin) (cos . ,cos) (expt . ,sexpt) (log . ,rlog))))
 (define (arity-table)      (map cons (map car (translation-table)) (map procedure-arity (map cdr (translation-table)))))
 (define (function-set)     (map car (translation-table)))
 (define (proc? symb)       (member symb (function-set)))
@@ -66,6 +69,7 @@ Revision history:
 (define symbol/constant    (make-parameter 0.5))     ;ratio between symbols and constants
 (define variables          (make-parameter '(x)))    ;list of variables (for multivariate add more symbols)
 (define random-constant    (make-parameter random))
+(define inter-opt          (make-parameter (λ (x) x)))       ;identity function! should be parameterized to contain GNA
                                                
 ;we use a sandboxed evaluation to discard memory and time consuming functions. If using scheme other than racket plain eval should do
 (define evaluate           (parameterize ([sandbox-eval-limits '(10 5)]);(s MiB) ;TODO: handle these exceptions
@@ -116,16 +120,15 @@ Revision history:
 
 (define (make-function tree-depth)
   ;generate random expression tree
-    (letrec ([loop
-              (lambda (to-go)
-                (cond [(zero? to-go) (make-leaf)]
-                      [else
-                       (if (true (stop-percent)) (make-leaf)
-                           (let* ([proc (random-function (function-set))]
-                                  [arity (proc-arity proc)])
-                             (cond [(= arity 2) (list proc (loop (sub1 to-go)) (loop (sub1 to-go)))]
-                                   [(= arity 1) (list proc (loop (sub1 to-go)))])))]))])
-      (loop tree-depth)))
+  (define (loop to-go)
+    (cond [(zero? to-go) (make-leaf)]
+          [else
+           (if (true (stop-percent)) (make-leaf)
+               (let* ([proc (random-function (function-set))]
+                      [arity (proc-arity proc)])
+                 (cond [(= arity 2) (list proc (loop (sub1 to-go)) (loop (sub1 to-go)))]
+                       [(= arity 1) (list proc (loop (sub1 to-go)))])))]))
+  (loop tree-depth))
 
 (define (code->function code [vars (variables)] [ev evaluate])
   (ev `(lambda ,vars ,(translate code))))
@@ -278,12 +281,14 @@ Revision history:
         (if (or (<= (caar fitness.populus) threshold)
                 (= generation max-generations))
             (parameterize ([pre-eval-inspector translate])
+              ;perform simplification of best fit
               (simplify best-fit))
-            (loop (cons best-fit (create-offspring (sub1 population) fitness.populus)) (add1 generation)))))))
+            ;transform best-fit using GNA or whatever intermediate optimization
+            (loop (cons ((inter-opt) best-fit) (create-offspring (sub1 population) fitness.populus)) 
+                  (add1 generation)))))))
 
 
 ;mics functions
-
 (define (t-plot2 tree [x-range '(0 . 10)] [y-range '(0 . 10)])
   (define (prepare-to-plot F) (lambda (x) (let ([res (F x)]) (if (real? res) res (magnitude res)))))
   (plot (line (prepare-to-plot (code->function tree))) #:x-min (car x-range) #:x-max (cdr x-range) #:y-min (car y-range) #:y-max (cdr y-range)))
