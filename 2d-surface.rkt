@@ -1,6 +1,8 @@
 #lang racket
 (require "genetic-programming.rkt"
          "gauss-newton.rkt"
+         "simplifier.rkt"
+         (planet williams/science/random-distributions/gaussian)
          (prefix-in f: "safe-defines.rkt"))
 
 (define (nan? x) (not (= x x)))
@@ -8,21 +10,26 @@
 (define (mean lst)
   (/ (apply + lst) (length lst)))
 (define (variance lst meanval)
-  (/ (apply + (map (λ (x) (sqr (- x meanval))) lst)) (sub1 (length lst))))
+  (/ (apply + (map (λ (x) (sqr (- x meanval))) lst)) (exact->inexact (length lst))))
 (define (covariance lstX lstY meanX meanY)
-  (/ (apply + (map (λ (x y) (* (- x meanX) (- y meanY))) lstX lstY)) (sub1 (length lstX))))
+  (/ (apply + (map (λ (x y) (* (- x meanX) (- y meanY))) lstX lstY)) (exact->inexact (length lstX))))
 
 (define vars '(x y))
 
-;\frac{10}{ .314x^2 + 3.4y^2 + x + 1.6xy + 3y + 4}
-(define data (with-input-from-file "input/surf-nocoeff.list" read))
+(define data (with-input-from-file "input/surf-nocoeff+noise.list" read))
 
 (define datX (map first  data))
 (define datY (map second data))
 (define datZ (map third  data))
 
+(define fit 
+  (lambda (F)
+    (let ([out (map (code->function F vars) datX datY)])
+      (let ([fit (/ (apply + (map sqr (map - out datZ))) (length datZ))])
+        (if (nan? fit) +Inf.0 (exact->inexact fit))))))
+
 (define fitness
-  (λ (F)
+  (lambda (F)
     (let* ([xmean (mean datZ)]
            [sigmax2 (variance datZ xmean)]
            [Y (map (code->function F vars) datX datY)]
@@ -31,13 +38,27 @@
            [sigmaxy (covariance datZ Y xmean ymean)]
            [fit (add1 (* -1 (/ (* 4 sigmaxy xmean ymean)
                                (* (+ sigmax2 sigmay2) (+ (sqr xmean) (sqr ymean))))))])
-           (if (nan? fit) +Inf.0 fit))))
+      
+      (if (nan? fit) +Inf.0 fit))))
+
+(define (every n #:do thunk #:otherwise thunko)
+  (let ([counter 0])
+    (lambda (x)
+      (set! counter (add1 counter))
+      (display counter) (newline)
+      (if (zero? (remainder counter n)) (thunk x) (thunko x)))))
 
 
 (parameterize
     ([variables vars]
      [translation-table `((+ . ,f:+) (- . ,f:-) (* . ,f:*) (/ . ,f:/))]
      [symbol/constant 1]
-     [inter-opt (lambda (x) x)])
-;  (random-seed 664)
-  (life 2000 3000 fitness 1e-6))
+     [mutation-percent 5]
+     [stop-percent 10]
+     [subexp-percent 10]
+     [crossover-percent 10]
+     [initial-complexity 7])
+    ; [inter-opt (every 10 #:do (lambda (F) (gauss-newton (simplify F) '(x y) (map list datX datY) 4)) 
+    ;                      #:otherwise (lambda (F) F))])
+     ;(random-seed 664)
+  (life 500 5000 fit 1e-6))
