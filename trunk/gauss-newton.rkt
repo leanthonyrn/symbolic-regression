@@ -48,6 +48,7 @@
 
 (define (gauss-newton expr vars-in-data data num-iter)
   ;calculates residuals
+  (display "GNA got:")(display expr)(newline)
   (define (residuals expr vars-in-data data)
     (transpose 
      (list 
@@ -56,7 +57,7 @@
               (map (λ(x) (take x (sub1 (length x)))) data))
            (map last data)))))
   
-  (if (zero? num-iter) expr
+  (if (or (zero? num-iter) (not (list? expr))) expr
       (let* ([Je/e       (generate-jacobian expr vars-in-data data)]
              [J          (third Je/e)]
              [expression (second Je/e)]
@@ -80,18 +81,13 @@
 
 
 ;TEST CASES
-(define ex '(+ (+ (* 20 (* x x)) (* 6 x)) (/ 2 (+ x 2))))
+;(define ex '(+ (+ (* 20 (* x x)) (* 6 x)) (/ 2 (+ x 2))))
 
-(define X (build-list 20 values))
-(define Y (build-list 20 (λ(x) (+ (+ (* 5 (* x x)) (* 3 x)) (/ 1 (+ x 1))))))
-
-;(gauss-newton ex '(x) (map list X Y) 20)
-
-
-;1d-structural 150gen score 0.009004204992428044 (stuck)
-;(define ex '(/ (/ (- h (- (+ (+ h (+ (+ (- (* h h) h) (+ h (/ h (/ 0.0007284950162342976 h)))) (- h (* (* h h) h)))) (- h h)) (* (* (+ h h) h) h))) (* (- (- (log 0.003131963321612487) h) h) h)) (+ (+ (log h) (/ h h)) (+ (log h) (/ h (+ h (- h (/ 0.0007264220029854186 h))))))))
-
-
-;(define data (with-input-from-file "1d.list" read))
+;(define X (build-list 20 values))
+;(define Y (build-list 20 (λ(x) (+ (+ (* 5 (* x x)) (* 3 x)) (/ 1 (+ x 1))))))
 
 ;(gauss-newton ex '(x) (map list X Y) 20)
+
+(define data (with-input-from-file "input/erf.list" read))
+
+(gauss-newton '(* h (log (* 0.1706225445298783 (log (* (- (/ 0 (* h 0.39517534898431644)) (+ h (* h 0.20005100919938204))) h))))) '(h) data 20)

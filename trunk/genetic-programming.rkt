@@ -25,7 +25,7 @@ Revision history:
 0.2.0 Mon Dec 13 2010 - added Gauss-Newton algorithm for fixing the coefficients
 |#
 (require mzlib/defmacro
-         plot
+;         plot
          ;racket/unsafe/ops
          racket/sandbox
          "simplifier.rkt"
@@ -283,17 +283,9 @@ Revision history:
             (parameterize ([pre-eval-inspector translate])
               ;perform simplification of best fit
               (simplify best-fit))
-            ;transform best-fit using GNA or whatever intermediate optimization
-            (loop (cons ((inter-opt) best-fit) (create-offspring (sub1 population) fitness.populus)) 
-                  (add1 generation)))))))
+            (begin 
+             ; (display "best fit:") (display best-fit) (newline)
+             ;transform best-fit using GNA or whatever intermediate optimization
+              (loop (cons ((inter-opt) best-fit) (create-offspring (sub1 population) fitness.populus)) 
+                    (add1 generation))))))))
 
-
-;mics functions
-(define (t-plot2 tree [x-range '(0 . 10)] [y-range '(0 . 10)])
-  (define (prepare-to-plot F) (lambda (x) (let ([res (F x)]) (if (real? res) res (magnitude res)))))
-  (plot (line (prepare-to-plot (code->function tree))) #:x-min (car x-range) #:x-max (cdr x-range) #:y-min (car y-range) #:y-max (cdr y-range)))
-
-;plain sequence generator (to generate x points)
-(define (sequence start increment end)
-  (if (>= start end) null
-      (cons start (sequence (+ start increment) increment end))))

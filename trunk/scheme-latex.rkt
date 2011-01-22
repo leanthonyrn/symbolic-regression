@@ -1,7 +1,9 @@
 #lang racket
+(require "simplifier.rkt")
+
 (define (to-latex exp)
   (cond ([null? exp] "")
-        ([number? exp] (real->decimal-string exp 2))
+        ([number? exp] (number->string exp) #;(real->decimal-string exp 2))
         ([symbol? exp] (symbol->string exp))
         ([list? exp]
          (let ([op (first exp)]
@@ -21,3 +23,6 @@
                   (string-append "{e}^{" (to-latex operand1) "}"))
                  (else 
                   (string-append (to-latex op) "(" (to-latex operand1) ")")))))))
+
+(define (l tree)
+  (to-latex (simplify tree)))
