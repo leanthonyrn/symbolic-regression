@@ -19,9 +19,8 @@ Author: Milan Markovic (11533) milan@elfak.rs
 
 Revision history:
 0.0.0 Sun Aug 15 2010 - initial implementation
-0.1.0 Tue Aug 24 2010 - removed globals, added parameters instead, tried natural-selection-proportional (discarded but included in this file)
-0.1.1 Sun Sep  5 2010 - added simplify (expression simplifier
-0.1.2 Wed Sep  8 2010 - moved simplify to a separate module, added sandboxed evaluation
+0.1.0 Tue Aug 24 2010 - removed globals, added parameters instead
+0.1.1 Sun Sep  5 2010 - added simplify (expression simplifier.1.2 Wed Sep  8 2010 - moved simplify to a separate module, added sandboxed evaluation
 0.2.0 Mon Dec 13 2010 - added Gauss-Newton algorithm for fixing the coefficients
 |#
 (require mzlib/defmacro
@@ -54,7 +53,9 @@ Revision history:
                     (sin  . ,f:sin)
                     (cos  . ,f:cos)
                     (expt . ,f:expt)
-                    (log  . ,f:log))))
+                    (log  . ,f:log)
+                    (sqrt . ,sqrt)
+                    (exp  . ,exp))))
 
 (define (arity-table)      (map cons (map car (translation-table)) (map procedure-arity (map cdr (translation-table)))))
 (define (function-set)     (map car (translation-table)))
