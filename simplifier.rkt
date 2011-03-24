@@ -6,7 +6,7 @@ Copyright (C) 2010 Milan Markovic (zivotinja@gmail.com | milan@elfak.rs)
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+(at your option) any later version.p
 
 This program is distributed in the hope that it will be useful,
 but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -44,11 +44,18 @@ Revision history:
                  [(+ (* ?m ?a)(* ?n ?a)) (* (+ ?m ?n) ?a)]
                  [(* ?a ?n)   (* ?n ?a)]
                  [(+ ?a ?n)   (+ ?n ?a)]
+                 [(- ?a ?n)   (+ (- 0 ?n) ?a)]
                  [(/ ?a ?a)   1]
-                 [(* ?a ?a)   (expt ?a 2)]
+                 ;[(* ?a ?a)   (expt ?a 2)]
                  [(* ?n (* ?m ?a))   (* (* ?n ?m) ?a)]
                  [(* ?x (* ?n ?y))   (* ?n (* ?x ?y))]
                  [(* (* ?n ?x) ?y)   (* ?n (* ?x ?y))]
+                 
+                 [(+ ?n (+ ?m ?a))   (+ (+ ?n ?m) ?a)]
+                 [(+ ?n (- ?m ?a))   (- (+ ?n ?m) ?a)]
+                 [(- ?n (+ ?m ?a))   (+ (- ?n ?m) ?a)]
+                 [(- ?n (- ?m ?a))   (+ (- ?m n) ?a)]
+                 
                  [(* ?b (/ ?a ?b))   ?a]
                  [(* (/ ?a ?b) ?b)   ?a]
                  [(/ (* ?n ?a) (* ?m ?a)) (*(/ ?n ?m) ?a)]
@@ -76,7 +83,8 @@ Revision history:
                  [(D ?x (/ ?a ?b))  (/ (- (* (D ?x ?a) ?b) (* (D ?x ?b) ?a)) (* ?b ?b))]
                  [(D ?x (expt ?a ?n))  (* (* ?n (expt ?a (- ?n 1))) (D ?x ?a))]
                  [(D ?x (expt ?n ?a))  (* (D ?x ?a) (* (expt ?n ?a) (log ?n)))]
-                 [(D ?x (expt ?a ?b))  (* (expt ?a ?b) (D ?x (* (log ?a) ?b)))]                  
+                 [(D ?x (expt ?a ?b))  (* (expt ?a ?b) (D ?x (* (log ?a) ?b)))]
+                 [(D ?x (sqrt ?a))     (/ (D ?x ?a) (* 2 (sqrt ?a)))]
                  }))
 
 (define (pattern rule) (car rule))

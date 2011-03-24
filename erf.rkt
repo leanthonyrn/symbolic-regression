@@ -4,7 +4,9 @@
 
 (define (nan? x) (not (= x x)))
 
-(define dat (with-input-from-file "input/erf.list" read))
+(define data (with-input-from-file "input/erf.list" read))
+(define (>0 x) (<= 0 (car x)))
+(define dat (filter >0 data))
 
 (define Xs (map first dat))
 (define Ys (map second dat))
@@ -22,7 +24,7 @@
   (λ (F)
     (let* ([xmean (mean Ys)]
            [sigmax2 (variance Ys xmean)]
-           [Y (map real-part (map (code->function F '(h)) Xs))]
+           [Y (map real-part (map (code->function F '(x)) Xs))]
            [ymean (mean Y)]
            [sigmay2 (variance Y ymean)]
            [sigmaxy (covariance Ys Y xmean ymean)]
@@ -31,15 +33,18 @@
 
 (define fitness-mse
   (λ (F)
-    (let ([fit (/ (apply + (map sqr (map - (map (code->function F '(h)) Xs) Ys))) (length Ys))])
+    (let ([fit (/ (apply + (map sqr (map - (map (code->function F '(x)) Xs) Ys))) (length Ys))])
       (cond [[complex? fit] +Inf.0]
             [[< 0 fit] (* -1 fit)]
             [(real? fit) fit]
             [else +Inf.0]))))
 
 (parameterize
-    ([variables '(h)]
+    ([variables '(x)]
      [translation-table `((+ . ,f:+) (- . ,f:-) (* . ,f:*) (/ . ,f:/) (exp . ,f:exp) (sqrt . ,sqrt))]
+     [initial-complexity 10]
+     [mutation-percent 10]
+     [stop-percent 10]
      [symbol/constant .75])
-  (random-seed 664)
-  (life 1000 5000 fitness-mse 1e-6))
+  ;(random-seed 664)
+  (life 1000 10000 fitness 1e-6 48))
